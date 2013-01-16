@@ -1,0 +1,51 @@
+using System;
+using System.Data;
+using dotnetspider.Utils;
+namespace dotnetspider.RSS
+{
+    public partial class NewsRss : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            string query = "select top 50 Id, Title, link, Name, PostedDate FROM Articles order by PostedDate desc";
+            DataTable rssTable = DataManager.ExecuteQuery(query);
+
+            Response.Clear();
+            Response.ContentType = "text/xml";
+
+            System.Xml.XmlTextWriter rssWriter = new System.Xml.XmlTextWriter(Response.OutputStream, System.Text.Encoding.UTF8);
+
+            rssWriter.WriteStartDocument();
+
+            rssWriter.WriteStartElement("rss");
+            rssWriter.WriteAttributeString("version", "2.0");
+
+            rssWriter.WriteStartElement("channel");
+            rssWriter.WriteElementString("title", "Technology News");
+            rssWriter.WriteElementString("link", "http://www.dotnetspider.com");
+            rssWriter.WriteElementString("description", "Latest Technology News from dotnetspider.com");
+            rssWriter.WriteElementString("copyright", "Copyright 2012 dotnetspider.com.");
+
+            // Write all Posts from table to the rss feed
+            foreach (DataRow row in rssTable.Rows)
+            {
+                rssWriter.WriteStartElement("item");
+                rssWriter.WriteElementString("title", (string)row["Title"]);
+                rssWriter.WriteElementString("link", "http://www.dotnetspider.com/resources/ViewResource.aspx?Id=" + (int)row["Id"]);
+                rssWriter.WriteElementString("description", (string)row["Description"]);
+                rssWriter.WriteElementString("author", (string)row["Name"]);
+                rssWriter.WriteElementString("pubDate", ((DateTime)row["PostedDate"]).ToString("r"));
+                rssWriter.WriteEndElement();
+            }
+
+            // Close xml elements
+            rssWriter.WriteEndElement();
+            rssWriter.WriteEndElement();
+            rssWriter.WriteEndDocument();
+            rssWriter.Flush();
+            rssWriter.Close();
+
+            Response.End();
+        }
+    }
+}
